@@ -46,8 +46,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <zlib.h>
-#include <assert.h>
 #include <ts/ts.h>
+#include <inttypes.h>
 
 #define DICT_PATH_MAX 512
 #define DICT_ENTRY_MAX 2048
@@ -71,7 +71,7 @@ int preload = 0;
 char dictionary[800000];
 
 void
-load_dictionary(char *dict, uLong * adler)
+load_dictionary(char *dict, uLong *adler)
 {
   FILE *fp;
   int i = 0;
@@ -168,7 +168,7 @@ gzip_data_alloc()
   }
 
   if (preload) {
-    assert(&data->zstrm);
+    TSAssert(&data->zstrm);
     err = deflateSetDictionary(&data->zstrm, (const Bytef *) dictionary, strlen(dictionary));
     if (err != Z_OK) {
       TSError("gzip-transform: ERROR: deflateSetDictionary (%d)!", err);
@@ -180,7 +180,7 @@ gzip_data_alloc()
 
 
 static void
-gzip_data_destroy(GzipData * data)
+gzip_data_destroy(GzipData *data)
 {
   TSDebug("gzip","gzip-transform: gzip_data_destroy() starts");  
   int err;
@@ -205,9 +205,9 @@ gzip_data_destroy(GzipData * data)
 
 
 static void
-gzip_transform_init(TSCont contp, GzipData * data)
+gzip_transform_init(TSCont contp, GzipData *data)
 {
-  TSDebug("gzip", "gzip_transform_init\n");
+  TSDebug("gzip", "gzip_transform_init");
   TSVConn output_conn;
   TSMBuffer bufp;
   TSMLoc hdr_loc;
@@ -261,9 +261,9 @@ gzip_transform_init(TSCont contp, GzipData * data)
 
 
 static void
-gzip_transform_one(GzipData * data, TSIOBufferReader input_reader, int amount)
+gzip_transform_one(GzipData *data, TSIOBufferReader input_reader, int amount)
 {
-  TSDebug("gzip", "gzip_transform_one\n");
+  TSDebug("gzip", "gzip_transform_one");
   TSIOBufferBlock blkp;
   const char *ibuf;
   char *obuf;
@@ -271,13 +271,13 @@ gzip_transform_one(GzipData * data, TSIOBufferReader input_reader, int amount)
   int err;
 
   while (amount > 0) {
-    TSDebug("gzip", "gzip_transform_one->loop, amount: %d\n",amount);
+    TSDebug("gzip", "gzip_transform_one->loop, amount: %d",amount);
     blkp = TSIOBufferReaderStart(input_reader);
 
     /* TSIOBufferReaderStart may return an error pointer */
     if (!blkp) {
        TSDebug("gzip", "couldn't get from IOBufferBlock");
-       TSError("couldn't get from IOBufferBlock\n");
+       TSError("couldn't get from IOBufferBlock");
        return;
     }
 
@@ -287,12 +287,12 @@ gzip_transform_one(GzipData * data, TSIOBufferReader input_reader, int amount)
     /* TSIOBufferReaderStart may return an error pointer */
     if (!ibuf) {
        TSDebug("gzip", "couldn't get from TSIOBufferBlockReadStart");
-       TSError("couldn't get from TSIOBufferBlockReadStart\n");
+       TSError("couldn't get from TSIOBufferBlockReadStart");
        return;
     }
     
     
-    TSDebug("gzip", "gzip_transform_one->TSIOBufferBlockReadStart ilength: %d\n",ilength);
+    TSDebug("gzip", "gzip_transform_one->TSIOBufferBlockReadStart ilength: %" PRId64, ilength);
     
     if (ilength > amount) {
       ilength = amount;
@@ -302,7 +302,7 @@ gzip_transform_one(GzipData * data, TSIOBufferReader input_reader, int amount)
     data->zstrm.avail_in = ilength;
 
     while (data->zstrm.avail_in > 0) {
-      TSDebug("gzip", "gzip_transform_one->Tdata->zstrm.avail_in: %d\n",data->zstrm.avail_in);
+      TSDebug("gzip", "gzip_transform_one->Tdata->zstrm.avail_in: %d",data->zstrm.avail_in);
       blkp = TSIOBufferStart(data->output_buffer);
 
       obuf = TSIOBufferBlockWriteStart(blkp, &olength);
@@ -321,7 +321,8 @@ gzip_transform_one(GzipData * data, TSIOBufferReader input_reader, int amount)
         data->output_length += (olength - data->zstrm.avail_out);
       }
       
-      TSDebug("gzip","deflate() call values olength: %d, ilength: %d, data->output_length: %d",olength, ilength, data->output_length );
+      TSDebug("gzip","deflate() call values olength: %" PRId64 " , ilength: %" PRId64 ", data->output_length: %d",
+              olength, ilength, data->output_length );
          
       if (data->zstrm.avail_out > 0) {
         if (data->zstrm.avail_in != 0) {
@@ -333,7 +334,7 @@ gzip_transform_one(GzipData * data, TSIOBufferReader input_reader, int amount)
     /* compute CRC for error checking at client */
     data->crc = crc32(data->crc, (unsigned char *) ibuf, ilength);
 
-    TSDebug("gzip", "gzip_transform_one pre consume %d from reader",ilength);
+    TSDebug("gzip", "gzip_transform_one pre consume %" PRId64 " from reader", ilength);
     TSIOBufferReaderConsume(input_reader, ilength);
     amount -= ilength;
   }
@@ -342,9 +343,9 @@ gzip_transform_one(GzipData * data, TSIOBufferReader input_reader, int amount)
 
 
 static void
-gzip_transform_finish(GzipData * data)
+gzip_transform_finish(GzipData *data)
 {
-  TSDebug("gzip", "gzip_transform_finish\n");
+  TSDebug("gzip", "gzip_transform_finish");
   if (data->state == 1) {
     TSIOBufferBlock blkp;
     char *obuf;
@@ -373,7 +374,7 @@ gzip_transform_finish(GzipData * data)
       }
       /* done! */
       if (err != Z_STREAM_END) {
-        TSDebug("gzip-transform", "deflate should report Z_STREAM_END\n");
+        TSDebug("gzip-transform", "deflate should report Z_STREAM_END");
       }
       break;
     }
@@ -427,7 +428,7 @@ gzip_transform_finish(GzipData * data)
 static void
 gzip_transform_do(TSCont contp)
 {
-  TSDebug("gzip", "gzip_transform_do\n");
+  TSDebug("gzip", "gzip_transform_do");
   TSVIO write_vio;
   GzipData *data;
   int towrite;
@@ -463,14 +464,14 @@ gzip_transform_do(TSCont contp)
      transformation we might have to finish writing the transformed
      data to our output connection. */
   if (!TSVIOBufferGet(write_vio)) {
-    TSDebug("gzip", "gzip_transform_do->!TSVIOBufferGet(write_vio)...\n");
+    TSDebug("gzip", "gzip_transform_do->!TSVIOBufferGet(write_vio)...");
     gzip_transform_finish(data);
 
     TSVIONBytesSet(data->output_vio, data->output_length);
     TSDebug("gzip-transform", "Compressed size %d (bytes)", data->output_length);
 
     if (data->output_length > length) {
-      TSDebug("gzip", "gzip_transform_do->!reeanble data->output_vio\n");
+      TSDebug("gzip", "gzip_transform_do->!reeanble data->output_vio");
       TSVIOReenable(data->output_vio);
     }
     return;
@@ -501,7 +502,7 @@ gzip_transform_do(TSCont contp)
     }
   }
 
-  TSDebug("gzip","TSVIONTodoGet(write_vio) -> %d", TSVIONTodoGet(write_vio) );
+  TSDebug("gzip","TSVIONTodoGet(write_vio) -> %" PRId64, TSVIONTodoGet(write_vio) );
 
   /* Now we check the write vio to see if there is data left to
      read. */
@@ -557,7 +558,7 @@ gzip_transform_do(TSCont contp)
 static int
 gzip_transform(TSCont contp, TSEvent event, void *edata)
 {
-  TSDebug("gzip", "gzip_transform event %d\n",event);
+  TSDebug("gzip", "gzip_transform event %d",event);
   /* Check to see if the transformation has been closed by a call to
      TSVConnClose. */
   if (TSVConnClosedGet(contp)) {
@@ -567,11 +568,11 @@ gzip_transform(TSCont contp, TSEvent event, void *edata)
     TSContDestroy(contp);
     return 0;
   } else {
-      TSDebug("gzip", "gzip_transform: switch on event\n");
+      TSDebug("gzip", "gzip_transform: switch on event");
     switch (event) {
     case TS_EVENT_ERROR:
       {
-        TSDebug("gzip", "gzip_transform: TS_EVENT_ERROR starts\n");
+        TSDebug("gzip", "gzip_transform: TS_EVENT_ERROR starts");
         TSVIO write_vio;
 
         /* Get the write vio for the write operation that was
@@ -585,7 +586,7 @@ gzip_transform(TSCont contp, TSEvent event, void *edata)
       }
       break;
     case TS_EVENT_VCONN_WRITE_COMPLETE:
-      TSDebug("gzip", "gzip_transform: TS_EVENT_VCONN_WRITE_COMPLETE starts\n");
+      TSDebug("gzip", "gzip_transform: TS_EVENT_VCONN_WRITE_COMPLETE starts");
       /* When our output connection says that it has finished
          reading all the data we've written to it then we should
          shutdown the write portion of its connection to
@@ -593,7 +594,7 @@ gzip_transform(TSCont contp, TSEvent event, void *edata)
       TSVConnShutdown(TSTransformOutputVConnGet(contp), 0, 1);
       break;
     case TS_EVENT_VCONN_WRITE_READY:
-       TSDebug("gzip", "gzip_transform: TS_EVENT_VCONN_WRITE_READY starts\n");
+       TSDebug("gzip", "gzip_transform: TS_EVENT_VCONN_WRITE_READY starts");
        /* If we get a WRITE_READY we'll attempt to transform more data. */
        gzip_transform_do(contp);    
        break;
@@ -602,7 +603,7 @@ gzip_transform(TSCont contp, TSEvent event, void *edata)
         gzip_transform_do(contp);    
         break;
     default:
-      TSDebug("gzip", "gzip_transform: default starts %d\n", event);
+      TSDebug("gzip", "gzip_transform: default starts %d", event);
       /* If we get any other type of event (sent, perhaps, because we were reenabled) then
          we'll attempt to transform more data. */     
       gzip_transform_do(contp);    
@@ -622,7 +623,7 @@ static int gzip_transformable(TSHttpTxn txnp, int server)
 	TSHttpStatus resp_status;
 	TSMLoc con_field;
 	int con_len;
-	const char * con_val;
+	const char *con_val;
 	if (server) {
 	    TSHttpTxnServerRespGet(txnp, &bufp, &hdr_loc);
 	} else {
@@ -661,7 +662,7 @@ static int gzip_transformable(TSHttpTxn txnp, int server)
 
 
 
-//  TSDebug("gzip", "gzip_transformable\n");
+//  TSDebug("gzip", "gzip_transformable");
   /* Server response header */
   TSMBuffer bufp;
   TSMLoc hdr_loc;
@@ -785,7 +786,7 @@ static void gzip_transform_add(TSHttpTxn txnp, int server)
 static void 
 normalize_accept_encoding(TSHttpTxn txnp, TSMBuffer reqp, TSMLoc hdr_loc)
 {
-//  const char * header = "Accept-Encoding";
+//  const char *header = "Accept-Encoding";
 //  int header_len = strlen(header);
   TSMLoc field = TSMimeHdrFieldFind(reqp, hdr_loc, TS_MIME_FIELD_ACCEPT_ENCODING
 				    , TS_MIME_LEN_ACCEPT_ENCODING);
@@ -795,7 +796,7 @@ normalize_accept_encoding(TSHttpTxn txnp, TSMBuffer reqp, TSMLoc hdr_loc)
   //remove the accept encoding field(s), 
   //while finding out if deflate is supported.    
     
-  while (field) 
+  while (field) {
     {
       TSMLoc tmp;
       

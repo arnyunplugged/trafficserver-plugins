@@ -124,7 +124,7 @@ EsiLib::gzip(const ByteBlockList& blocks, std::string &cdata) {
   cdata[1] = MAGIC_BYTE_2;
   cdata[2] = Z_DEFLATED;
   cdata[9] = OS_TYPE;
-  append(cdata, crc);
+  append(cdata, static_cast<uint32_t>(crc));
   append(cdata, static_cast<int32_t>(total_data_len));
   return true;
 }

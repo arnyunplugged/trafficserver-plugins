@@ -89,8 +89,8 @@ HttpDataFetcherImpl::addFetchRequest(const string &url, FetchedDataProcessor *ca
     ((insert_result.first)->second).callback_objects.push_back(callback_obj);
   }
   if (!insert_result.second) {
-    TSDebug(_debug_tag.c_str(), "[%s] Fetch request for url [%.*s] already added", __FUNCTION__,
-             url.size(), url.data());
+    TSDebug(_debug_tag.c_str(), "[%s] Fetch request for url [%s] already added", __FUNCTION__,
+             url.data());
     return true;
   }
   
@@ -113,8 +113,8 @@ TSFetchUrl(http_req.data(), http_req.size(), _client_addr, _contp, AFTER_BODY,
   }
 */
   
-  TSDebug(_debug_tag.c_str(), "[%s] Successfully added fetch request for URL [%.*s]",
-           __FUNCTION__, url.size(), url.data());
+  TSDebug(_debug_tag.c_str(), "[%s] Successfully added fetch request for URL [%s]",
+           __FUNCTION__, url.data());
   _page_entry_lookup.push_back(insert_result.first);
   ++_n_pending_requests;
   return true;
@@ -124,7 +124,7 @@ bool
 HttpDataFetcherImpl::_isFetchEvent(TSEvent event, int &base_event_id) const {
   base_event_id = _getBaseEventId(event);
   if ((base_event_id < 0) || (base_event_id >= static_cast<int>(_page_entry_lookup.size()))) {
-    TSDebug(_debug_tag.c_str(), "[%s] Event id %d not within fetch event id range [%d, %d)",
+    TSDebug(_debug_tag.c_str(), "[%s] Event id %d not within fetch event id range [%d, %ld)",
              __FUNCTION__, event, FETCH_EVENT_ID_BASE, FETCH_EVENT_ID_BASE + (_page_entry_lookup.size() * 3));
     return false;
   }
@@ -154,8 +154,8 @@ HttpDataFetcherImpl::handleFetchEvent(TSEvent event, void *edata) {
 
   int event_id = (static_cast<int>(event) - FETCH_EVENT_ID_BASE) % 3;
   if (event_id != 0) { // failure or timeout
-    TSError("[%s] Received failure/timeout event id %d for request [%.*s]",
-             __FUNCTION__, event_id, req_str.size(), req_str.data());
+    TSError("[%s] Received failure/timeout event id %d for request [%s]",
+             __FUNCTION__, event_id, req_str.data());
     return true;
   }
 
@@ -184,12 +184,12 @@ HttpDataFetcherImpl::handleFetchEvent(TSEvent event, void *edata) {
         (*list_iter)->processData(req_str.data(), req_str.size(), req_data.body, req_data.body_len);
       }
     } else {
-      TSDebug(_debug_tag.c_str(), "[%s] Received non-OK status %d for request [%.*s]",
-               __FUNCTION__, resp_status, req_str.size(), req_str.data());
+      TSDebug(_debug_tag.c_str(), "[%s] Received non-OK status %d for request [%s]",
+               __FUNCTION__, resp_status, req_str.data());
     } 
   } else {
-    TSDebug(_debug_tag.c_str(), "[%s] Could not parse response for request [%.*s]",
-             __FUNCTION__, req_str.size(), req_str.data());
+    TSDebug(_debug_tag.c_str(), "[%s] Could not parse response for request [%s]",
+             __FUNCTION__, req_str.data());
   }
 
   if (!valid_data_received) {
@@ -204,24 +204,24 @@ bool
 HttpDataFetcherImpl::getData(const string &url, ResponseData &resp_data) const {
   UrlToContentMap::const_iterator iter = _pages.find(url);
   if (iter == _pages.end()) {
-    TSError("Content being requested for unregistered URL [%.*s]", url.size(), url.data());
+    TSError("Content being requested for unregistered URL [%s]", url.data());
     return false;
   }
   const RequestData &req_data = iter->second; // handy reference
   if (!req_data.complete) {
     // request not completed yet
-    TSError("Request for URL [%.*s] not complete", url.size(), url.data());
+    TSError("Request for URL [%s] not complete", url.data());
     return false;
   }
   if (req_data.response.empty()) {
     // did not receive valid data
-    TSError("No valid data received for URL [%.*s]; returning empty data to be safe", url.size(), url.data());
+    TSError("No valid data received for URL [%s]; returning empty data to be safe", url.data());
     resp_data.clear();
     return false;
   }
   resp_data.set(req_data.body, req_data.body_len, req_data.bufp, req_data.hdr_loc);
-  TSDebug(_debug_tag.c_str(), "[%s] Found data for URL [%.*s] of size %d starting with [%.5s]", 
-           __FUNCTION__, url.size(), url.data(), req_data.body_len, req_data.body);
+  TSDebug(_debug_tag.c_str(), "[%s] Found data for URL [%s] of size %d starting with [%.5s]",
+           __FUNCTION__, url.data(), req_data.body_len, req_data.body);
   return true;
 }
 
@@ -242,7 +242,7 @@ DataStatus
 HttpDataFetcherImpl::getRequestStatus(const string &url) const {
   UrlToContentMap::const_iterator iter = _pages.find(url);
   if (iter == _pages.end()) {
-    TSError("Status being requested for unregistered URL [%.*s]", url.size(), url.data());
+    TSError("Status being requested for unregistered URL [%s]", url.data());
     return STATUS_ERROR;
   }
   if (!(iter->second).complete) {

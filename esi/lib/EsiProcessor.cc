@@ -345,7 +345,7 @@ EsiProcessor::_processEsiNode(const DocNodeList::iterator &iter) {
   if ((node.type == DocNode::TYPE_INCLUDE) || (node.type == DocNode::TYPE_SPECIAL_INCLUDE)) {
     const char *content;
     int content_len;
-    if (retval = _getIncludeData(node, &content, &content_len)) {
+    if ((retval = _getIncludeData(node, &content, &content_len))) {
       _output_data.append(content, content_len);
     }
   } else if ((node.type == DocNode::TYPE_COMMENT) || (node.type == DocNode::TYPE_REMOVE) ||

@@ -35,7 +35,8 @@ void FailureInfo::registerSuccFail(bool isSuccess)
 
     if( ( result.tv_sec*1000000+result.tv_usec )   > (WINDOW_SIZE*1000) )
     {
-        _windowMarker=++_windowMarker%_totalSlots;
+        ++_windowMarker;
+        _windowMarker%=_totalSlots;
       
         if(_windowMarker==_totalSlots-1)
         {

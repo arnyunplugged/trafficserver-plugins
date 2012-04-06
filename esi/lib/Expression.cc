@@ -173,7 +173,7 @@ Expression::evaluate(const char *expr, int expr_len /* = -1 */) {
     _debugLog(_debug_tag.c_str(), "[%s] Returning false for empty expression", __FUNCTION__);
     return false;
   }
-  Operator op;
+  Operator op = OP_EQ; // stupid initialized checking, make gcc happy
   const char *subexpr;
   int subexpr_len;
   string lhs, rhs;
@@ -193,7 +193,8 @@ Expression::evaluate(const char *expr, int expr_len /* = -1 */) {
     rhs = expand(subexpr, subexpr_len);
     _debugLog(_debug_tag.c_str(), "[%s] RHS [%.*s] expanded to [%.*s]",
               __FUNCTION__, subexpr_len, subexpr, rhs.size(), rhs.data());
-    double lhs_numerical, rhs_numerical;
+    double lhs_numerical = 0;
+    double rhs_numerical = 0;
     bool are_numerical = _convert(lhs, lhs_numerical);
     are_numerical = are_numerical ? _convert(rhs, rhs_numerical) : false;
     switch (op) {

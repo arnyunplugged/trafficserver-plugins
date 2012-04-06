@@ -490,7 +490,7 @@ transformData(TSCont contp)
   if (!process_input_complete && (cont_data->curr_state == ContData::READING_ESI_DOC)) {
     // Determine how much data we have left to read.
     toread = TSVIONTodoGet(cont_data->input_vio);
-    TSDebug((cont_data->debug_tag).c_str(), "[%s] upstream VC has %d bytes available to read",
+    TSDebug((cont_data->debug_tag).c_str(), "[%s] upstream VC has %ld bytes available to read",
              __FUNCTION__, toread);
     
     if (toread > 0) {
@@ -529,7 +529,7 @@ transformData(TSCont contp)
 */
         }
       }
-      TSDebug((cont_data->debug_tag).c_str(), "[%s] Consumed %d bytes from upstream VC",
+      TSDebug((cont_data->debug_tag).c_str(), "[%s] Consumed %ld bytes from upstream VC",
                __FUNCTION__, consumed);
       
       TSIOBufferReaderConsume(cont_data->input_reader, consumed);
@@ -552,7 +552,7 @@ transformData(TSCont contp)
     TSDebug((cont_data->debug_tag).c_str(), "[%s] Completed reading input...", __FUNCTION__);
     if (cont_data->input_type == DATA_TYPE_PACKED_ESI) { 
       TSDebug(DEBUG_TAG, "[%s] Going to use packed node list of size %d",
-               __FUNCTION__, cont_data->packed_node_list.size());
+               __FUNCTION__, (int) cont_data->packed_node_list.size());
       cont_data->esi_proc->usePackedNodeList(cont_data->packed_node_list);
     } else {
       if (cont_data->input_type == DATA_TYPE_GZIPPED_ESI) {
@@ -610,7 +610,7 @@ transformData(TSCont contp)
             out_data = "";
           } else {
             TSDebug((cont_data->debug_tag).c_str(), "[%s] Compressed document from size %d to %d bytes",
-                     __FUNCTION__, out_data_len, cdata.size());
+                     __FUNCTION__, out_data_len, (int) cdata.size());
             out_data_len = cdata.size();
             out_data = cdata.data();
           }
@@ -751,7 +751,7 @@ transformHandler(TSCont contp, TSEvent event, void *edata)
       // we need to return control to the fetch API to give up it's
       // lock on our continuation which will fail if we destroy
       // ourselves right now
-      TSDebug(cont_debug_tag, "[%s] Deferring shutdown as data event was just processed");
+      TSDebug(cont_debug_tag, "[%s] Deferring shutdown as data event was just processed", __FUNCTION__);
       TSContSchedule(contp, 10, TS_THREAD_POOL_TASK);
     } else {
       goto lShutdown;
@@ -1082,7 +1082,7 @@ isInterceptRequest(TSHttpTxn txnp) {
       TSDebug(DEBUG_TAG, "[%s] Method [%.*s] invalid, [%s] expected", __FUNCTION__, method_len, method,
                TS_HTTP_METHOD_POST);
     } else {
-      TSDebug("[%s] Valid server intercept method found", __FUNCTION__);
+      TSDebug(DEBUG_TAG, "[%s] Valid server intercept method found", __FUNCTION__);
       valid_request = true;
     }
   }

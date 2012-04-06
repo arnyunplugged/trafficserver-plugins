@@ -34,7 +34,8 @@ namespace EsiLib {
 class StatSystem {
 public:
   virtual void create(int handle) = 0;
-  virtual void increment(int handle, TSMgmtInt step = 1) = 0;
+//FIXME step should be TSMgmtInt
+  virtual void increment(int handle, int step = 1) = 0;
   virtual ~StatSystem() { };
 };
 

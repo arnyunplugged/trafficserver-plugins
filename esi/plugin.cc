@@ -119,7 +119,8 @@ public:
   void create(int handle) {
         g_stat_indices[handle]=TSStatCreate(Stats::STAT_NAMES[handle], TS_RECORDDATATYPE_INT, TS_STAT_PERSISTENT, TS_STAT_SYNC_COUNT);
   }
-  void increment(int handle, TSMgmtInt step = 1) {
+//  void increment(int handle, TSMgmtInt step = 1) {
+  void increment(int handle, int step = 1) {
     TSStatIntIncrement(g_stat_indices[handle], step);
   }
 };
@@ -226,7 +227,7 @@ void
 ContData::getClientState() {
   TSMBuffer req_bufp;
   TSMLoc req_hdr_loc;
-  if (TSHttpTxnClientReqGet(txnp, &req_bufp, &req_hdr_loc) == 0) {
+  if (TSHttpTxnClientReqGet(txnp, &req_bufp, &req_hdr_loc) != TS_SUCCESS) {
     TSError("[%s] Error while retrieving client request", __FUNCTION__);
     return;
   }
@@ -242,12 +243,18 @@ ContData::getClientState() {
   }
   if (req_bufp && req_hdr_loc) {
     TSMLoc url_loc;
-    TSHttpHdrUrlGet(req_bufp, req_hdr_loc, &url_loc);
+    if(TSHttpHdrUrlGet(req_bufp, req_hdr_loc, &url_loc) != TS_SUCCESS) {
+        TSError("[%s] Error while retrieving hdr url", __FUNCTION__);
+/*FIXME Does this leak?*/
+        return;
+    }
     if (url_loc) {
       if (request_url) {
         TSfree(request_url);
       }
-      request_url = TSUrlStringGet(req_bufp, url_loc, NULL);
+//FIXME TSUrlStringGet says it can accept a null length but it lies.
+      int length;
+      request_url = TSUrlStringGet(req_bufp, url_loc, &length);
       TSDebug(DEBUG_TAG, "[%s] Got request URL [%s]", __FUNCTION__, request_url ? request_url : "(null)");
       int query_len;
       const char *query = TSUrlHttpQueryGet(req_bufp, url_loc, &query_len);
@@ -302,7 +309,8 @@ ContData::getServerState() {
   TSMLoc hdr_loc;
   if (!TSHttpTxnServerRespGet(txnp, &bufp, &hdr_loc)) {
     TSDebug(DEBUG_TAG, "[%s] Could not get server response; Assuming cache object", __FUNCTION__);
-    input_type = DATA_TYPE_PACKED_ESI;
+//FIXME In theory it should be DATA_TYPE_PACKED_ESI but that doesn't work. Forcing to RAW_ESI for now.
+    input_type = DATA_TYPE_RAW_ESI;
     return;
   }
   if (checkHeaderValue(bufp, hdr_loc, TS_MIME_FIELD_CONTENT_ENCODING,
@@ -513,10 +521,12 @@ transformData(TSCont contp)
           consumed += data_len;
           
           block = TSIOBufferBlockNext(block);
+/*FIXME this chunk of code looks to be in error. Commenting out.
           if (!block) {
             TSError("[%s] Error while getting block from ioreader", __FUNCTION__);
             return 0;
           }
+*/
         }
       }
       TSDebug((cont_data->debug_tag).c_str(), "[%s] Consumed %d bytes from upstream VC",
@@ -799,7 +809,7 @@ modifyResponseHeader(TSCont contp, TSEvent event, void *edata) {
   }
   TSMBuffer bufp;
   TSMLoc hdr_loc;
-  if (TSHttpTxnClientRespGet(txnp, &bufp, &hdr_loc)) {
+  if (TSHttpTxnClientRespGet(txnp, &bufp, &hdr_loc) == TS_SUCCESS) {
     int n_mime_headers = TSMimeHdrFieldsCount(bufp, hdr_loc);
     TSMLoc field_loc;
     const char *name, *value;
@@ -916,7 +926,7 @@ static void
 maskOsCacheHeaders(TSHttpTxn txnp) {
   TSMBuffer bufp;
   TSMLoc hdr_loc;
-  if (TSHttpTxnServerRespGet(txnp, &bufp, &hdr_loc) == 0) {
+  if (TSHttpTxnServerRespGet(txnp, &bufp, &hdr_loc) != TS_SUCCESS) {
     TSError("[%s] Couldn't get server response from txn", __FUNCTION__);
     return;
   }
@@ -984,7 +994,7 @@ isTxnTransformable(TSHttpTxn txnp, bool is_cache_txn) {
 
   header_obtained = is_cache_txn ? TSHttpTxnCachedRespGet(txnp, &bufp, &hdr_loc) :
     TSHttpTxnServerRespGet(txnp, &bufp, &hdr_loc);
-  if (header_obtained == 0) {
+  if (header_obtained != TS_SUCCESS) {
     TSError("[%s] Couldn't get txn header", __FUNCTION__);
     goto lReturn;
   }
@@ -1055,7 +1065,7 @@ isInterceptRequest(TSHttpTxn txnp) {
 
   TSMBuffer bufp;
   TSMLoc hdr_loc;
-  if (!TSHttpTxnClientReqGet(txnp, &bufp, &hdr_loc)) {
+  if (TSHttpTxnClientReqGet(txnp, &bufp, &hdr_loc) != TS_SUCCESS) {
     TSError("[%s] Could not get client request", __FUNCTION__);
     return false;
   }

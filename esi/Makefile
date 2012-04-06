@@ -17,7 +17,7 @@
 TSXS?=tsxs
 
 all:	plugin.cc serverIntercept.cc
-	$(TSXS) -v -Ilib -c $? -o esi.so
+	$(TSXS) -v -I lib -I fetcher/ -c plugin.cc serverIntercept.cc lib/*.cc fetcher/*.cc -o esi.so
 
 install:
 	$(TSXS) -i -o esi.so

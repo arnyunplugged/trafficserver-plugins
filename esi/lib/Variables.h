@@ -28,6 +28,7 @@
 #include <list>
 #include <boost/noncopyable.hpp>
 
+#include <cstring>
 #include "ComponentBase.h"
 #include "StringHash.h"
 #include "HttpHeader.h"

@@ -25,7 +25,9 @@
 
 using namespace EsiLib;
 
-const char *Stats::STAT_NAMES[Stats::MAX_STAT_ENUM] = { 
+namespace EsiLib {
+namespace Stats {
+const char *STAT_NAMES[Stats::MAX_STAT_ENUM] = {
   "esi.n_os_docs",
   "esi.n_cache_docs",
   "esi.n_parse_errs",
@@ -35,25 +37,33 @@ const char *Stats::STAT_NAMES[Stats::MAX_STAT_ENUM] = {
   "esi.n_spcl_include_errs"
 };
 
-static int g_stat_indices[Stats::MAX_STAT_ENUM];
-static StatSystem *g_system = 0;
+int g_stat_indices[Stats::MAX_STAT_ENUM];
+StatSystem *g_system = 0;
 
-void Stats::init(StatSystem *system) {
+void init(StatSystem *system) {
   g_system = system;
   if (g_system) {
     for (int i = 0; i < Stats::MAX_STAT_ENUM; ++i) {
-      if (!g_system->create($i)) {
+//FIXME doesn't return avalue.
+g_system->create(i);
+/*      if (!g_system->create(i)) {
         Utils::ERROR_LOG("[%s] Unable to create stat [%s]", __FUNCTION__, Stats::STAT_NAMES[i]);
-      }
+      }*/
     }
   }
 }
 
-void Stats::increment(Stats::STAT st, TSMgmtInt step /* = 1 */) {
+//FIXME step should be TSMgmtInt but for some reason the linker is having some strange int vs long name mangling issue.
+void increment(Stats::STAT st, int step/* = 1 */) {
   if (g_system) {
+//FIXME doesn't return avalue.
+g_system->increment(st, step);
+/*
     if (!g_system->increment(st, step)) {
       Utils::ERROR_LOG("[%s] Unable to increment stat [%s] by step [%d]", __FUNCTION__, step,
                        Stats::STAT_NAMES[st]);
     }
+*/
   }
 }
+}}

@@ -28,6 +28,7 @@
 #include "DocNode.h"
 #include "ComponentBase.h"
 
+#include <cstring>
 #include <string>
 #include <map>
 #include <list>

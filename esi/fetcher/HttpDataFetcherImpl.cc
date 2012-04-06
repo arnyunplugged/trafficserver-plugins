@@ -103,11 +103,15 @@ HttpDataFetcherImpl::addFetchRequest(const string &url, FetchedDataProcessor *ca
   event_ids.timeout_event_id = _curr_event_id_base + 2;
   _curr_event_id_base += 3;
 
-  if (TSFetchUrl(http_req.data(), http_req.size(), _client_addr, _contp, AFTER_BODY,
+//FIXME. This looks to be a regression.
+TSFetchUrl(http_req.data(), http_req.size(), _client_addr, _contp, AFTER_BODY,
+                  event_ids);
+/*  if (TSFetchUrl(http_req.data(), http_req.size(), _client_addr, _contp, AFTER_BODY,
                   event_ids) == TS_ERROR) {
     TSError("Failed to add fetch request for URL [%.*s]", url.size(), url.data());
     return false;
   }
+*/
   
   TSDebug(_debug_tag.c_str(), "[%s] Successfully added fetch request for URL [%.*s]",
            __FUNCTION__, url.size(), url.data());

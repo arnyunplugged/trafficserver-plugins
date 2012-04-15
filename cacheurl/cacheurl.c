@@ -345,10 +345,8 @@ static int check_ts_version() {
       return 0;
     }
 
-    /* Need at least TS 2.1.6 */
-    if (major_ts_version == 2 && (
-                (minor_ts_version == 1 && patch_ts_version >= 6 ) ||
-                minor_ts_version > 1)) {
+    /* we are now v3.x */
+    if (major_ts_version >= 3) {
       result = 1;
     }
 
@@ -370,13 +368,13 @@ void TSPluginInit(int argc, const char *argv[]) {
     info.vendor_name = "OmniTI";
     info.support_email = "sa@omniti.com";
 
-    if (TSPluginRegister(TS_SDK_VERSION_2_0, &info) != TS_SUCCESS) {
+    if (TSPluginRegister(TS_SDK_VERSION_3_0, &info) != TS_SUCCESS) {
         initialization_error("Plugin registration failed.");
         return;
     }
 
     if (!check_ts_version()) {
-        initialization_error("Plugin requires Traffic Server 2.0 or later");
+        initialization_error("Plugin requires Traffic Server 3.0 or later");
         return;
     }
 
